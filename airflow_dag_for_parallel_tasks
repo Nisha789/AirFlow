@@ -1,0 +1,55 @@
+from airflow import DAG
+from airflow.operators import BashOperator
+from datetime import datetime, timedelta
+
+default_args = {
+    'owner' : 'airflow',
+    'depends_on_past' : False,
+    # 'email_on_failure' : False,
+    # 'email_on_retry' : False,
+    # 'email' : '[your-email.example.com]',
+    'retires' : 1,
+    'retry_delay' : timedelta(minutes=5)
+}
+
+dag = DAG(
+    'parallel_job_dag',
+    default_args = default_args,
+    description = 'My First Dag with Parallel tasks',
+    schedule_interval = "*/2 * * * *", # This job gets executed every 2 mins
+    start_date = datetime(2024,12,10),
+    catchup = False,
+    tags = ['dev']
+)
+
+start_task = BashOperator(
+    task_id = 'start_task',
+    bash_command = 'echo "Start Task"',
+    dag = dag
+)
+
+parallel_task_1 = BashOperator(
+    task_id = 'parallel_task_1',
+    bash_command = 'echo "Parallel Task 1"',
+    dag = dag
+)
+
+parallel_task_2 = BashOperator(
+    task_id = "parallel_task_2",
+    bash_command = 'echo "Parallel Task 2"',
+    dag = dag
+)
+
+parallel_task_3 = BashOperator(
+    task_id = "parallel_task_3",
+    bash_command = 'echo "Parallel Task 3"',
+    dag = dag
+)
+
+end_task = BashOperator(
+    task_id = 'end_task',
+    bash_command = 'echo "End Task"',
+    dag = dag
+)
+
+start_task >> [parallel_task_1,parallel_task_2,parallel_task_3] >> end_task
